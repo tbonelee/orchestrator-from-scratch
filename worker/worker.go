@@ -21,6 +21,10 @@ func (w *Worker) CollectStats() {
 	fmt.Println("Collecting stats")
 }
 
+func (w *Worker) AddTask(t task.Task) {
+	w.Queue.Enqueue(t)
+}
+
 func (w *Worker) RunTask() {
 	fmt.Println("Starting or stopping a task")
 }
