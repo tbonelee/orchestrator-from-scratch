@@ -149,3 +149,11 @@ func (m *Manager) SendWork() {
 		log.Println("No work in the queue")
 	}
 }
+
+func (m *Manager) GetTasks() []*task.Task {
+	tasks := []*task.Task{}
+	for _, t := range m.TaskDb {
+		tasks = append(tasks, t)
+	}
+	return tasks
+}
