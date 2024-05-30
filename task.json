@@ -4,7 +4,14 @@
   "Task": {
     "State": 1,
     "ID":"CB7AA96E-15B9-4936-951F-DFED678153C2",
-    "Name": "test-chapter-5",
-    "Image": "strm/helloworld-http"
+    "Name": "test-server",
+    "Image": "timboring/echo-server:latest",
+    "ExposedPorts": {
+      "7777/tcp": {}
+    },
+    "PortBindings": {
+      "7777/tcp": "7777"
+    },
+    "HealthCheck": "/health"
   }
 }

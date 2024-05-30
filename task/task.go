@@ -27,10 +27,13 @@ type Task struct {
 	Memory        int64
 	Disk          int64
 	ExposedPorts  nat.PortSet
+	HostPorts     nat.PortMap
 	PortBindings  map[string]string
 	RestartPolicy container.RestartPolicyMode
 	StartTime     time.Time
 	FinishTime    time.Time
+	HealthCheck   string // Health check url
+	RestartCount  int    // Number of times the container has been restarted
 }
 
 type TaskEvent struct {
