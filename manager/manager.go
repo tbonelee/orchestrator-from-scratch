@@ -22,6 +22,10 @@ type Manager struct {
 	LastWorker    int
 }
 
+func (m *Manager) AddTask(te task.TaskEvent) {
+	m.Pending.Enqueue(te)
+}
+
 func (m *Manager) SelectWorker() string {
 	var newWorker int
 	if m.LastWorker+1 < len(m.Workers) {
