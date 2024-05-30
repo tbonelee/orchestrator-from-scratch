@@ -59,12 +59,12 @@ func (m *Manager) SelectWorker() string {
 }
 
 func (m *Manager) UpdateTasks() {
-	for _, worker := range m.Workers {
-		log.Printf("Checking worker %v for task updates", worker)
-		url := fmt.Sprintf("http://%s/tasks", worker)
+	for _, w := range m.Workers {
+		log.Printf("Checking worker %v for task updates", w)
+		url := fmt.Sprintf("http://%s/tasks", w)
 		resp, err := http.Get(url)
 		if err != nil {
-			log.Printf("Error connecting to %v: %v\n", worker, err)
+			log.Printf("Error connecting to %v: %v\n", w, err)
 		}
 
 		if resp.StatusCode != http.StatusOK {
