@@ -68,17 +68,18 @@ func (m *Manager) AddTask(te task.TaskEvent) {
 	m.Pending.Enqueue(te)
 }
 
-func (m *Manager) SelectWorker() string {
-	var newWorker int
-	if m.LastWorker+1 < len(m.Workers) {
-		newWorker = m.LastWorker + 1
-		m.LastWorker++
-	} else {
-		newWorker = 0
-		m.LastWorker = 0
+func (m *Manager) SelectWorker(t task.Task) (*node.Node, error) {
+	candidates := m.Scheduler.SelectCandidateNodes(t, m.WorkerNodes)
+	if candidates == nil {
+		msg := fmt.Sprintf("No available candidates match resource request for task %v",
+			t.ID)
+		err := errors.New(msg)
+		return nil, err
 	}
+	scores := m.Scheduler.Score(t, candidates)
+	selectedNode := m.Scheduler.Pick(scores, candidates)
 
-	return m.Workers[newWorker]
+	return selectedNode, nil
 }
 
 func (m *Manager) UpdateTasks() {
@@ -133,16 +134,34 @@ func (m *Manager) updateTasks() {
 
 func (m *Manager) SendWork() {
 	if m.Pending.Len() > 0 {
-		w := m.SelectWorker()
 
 		e := m.Pending.Dequeue()
 		te := e.(task.TaskEvent)
-		t := te.Task
-		log.Printf("Pulled %v off pending queue\n", t)
-
 		m.EventDb[te.ID] = &te
-		m.WorkerTaskMap[w] = append(m.WorkerTaskMap[w], te.Task.ID)
-		m.TaskWorkerMap[t.ID] = w
+		log.Printf("Pulled %v off pending queue\n", te)
+
+		// 이미 해당 task가 worker에 할당되어 있는지 확인
+		// 그 후 유효한 상태 전이인지 확인하여 처리
+		taskWorker, ok := m.TaskWorkerMap[te.Task.ID]
+		if ok {
+			persistedTask := m.TaskDb[te.Task.ID]
+			if te.State == task.Completed && task.ValidStateTransition(persistedTask.State, te.State) {
+				m.stopTask(taskWorker, te.Task.ID.String())
+				return
+			}
+
+			log.Printf("invalid request: existing task %s is in state %v and cannot transition to the completed state\n",
+				persistedTask.ID.String(), persistedTask.State)
+			return
+		}
+
+		t := te.Task
+		w, err := m.SelectWorker(t)
+		if err != nil {
+			log.Printf("error selecting worker for task %s: %v\n", t.ID, err)
+		}
+		m.WorkerTaskMap[w.Name] = append(m.WorkerTaskMap[w.Name], te.Task.ID)
+		m.TaskWorkerMap[t.ID] = w.Name
 
 		t.State = task.Scheduled
 		m.TaskDb[t.ID] = &t
@@ -152,7 +171,7 @@ func (m *Manager) SendWork() {
 			log.Printf("Unable to marshal task object: %v\n", t)
 		}
 
-		url := fmt.Sprintf("http://%s/tasks", w)
+		url := fmt.Sprintf("http://%s/tasks", w.Name)
 		resp, err := http.Post(url, "application/json", bytes.NewBuffer(data))
 		if err != nil {
 			log.Printf("Error connecting to %v: %v\n", w, err)
@@ -181,6 +200,29 @@ func (m *Manager) SendWork() {
 	} else {
 		log.Println("No work in the queue")
 	}
+}
+
+func (m *Manager) stopTask(worker string, taskID string) {
+	client := &http.Client{}
+	url := fmt.Sprintf("http://%s/tasks/%s", worker, taskID)
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		log.Printf("error creating request to delete task %s: %v\n", taskID, err)
+		return
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("error connecting to worker at %s: %v\n", url, err)
+		return
+	}
+
+	if resp.StatusCode != 204 {
+		log.Printf("Error sending request: %v\n", err)
+		return
+	}
+
+	log.Printf("task %s has been scheduled to be stopped", taskID)
 }
 
 func (m *Manager) GetTasks() []*task.Task {
