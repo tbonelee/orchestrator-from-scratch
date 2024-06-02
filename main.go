@@ -57,7 +57,7 @@ func main() {
 		fmt.Sprintf("%s:%d", whost, wport+1),
 		fmt.Sprintf("%s:%d", whost, wport+2),
 	}
-	m := manager.New(workers, "epvm")
+	m := manager.New(workers, "epvm", "memory")
 	mapi := manager.Api{Address: mhost, Port: mport, Manager: m}
 
 	go m.ProcessTasks()
