@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"log"
 	"net/http"
+	"orchestrator-from-scratch/stats"
 	"orchestrator-from-scratch/task"
 )
 
@@ -68,6 +69,13 @@ func (a *Api) StopTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 func (a *Api) GetStatsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	if a.Worker.Stats != nil {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(a.Worker.Stats)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(a.Worker.Stats)
+	stats := stats.GetStats()
+	json.NewEncoder(w).Encode(stats)
 }
