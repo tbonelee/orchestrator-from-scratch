@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"log"
 	"net/http"
+	"orchestrator-from-scratch/node"
+	"orchestrator-from-scratch/scheduler"
 	"orchestrator-from-scratch/task"
 	"orchestrator-from-scratch/worker"
 	"strings"
@@ -24,15 +26,30 @@ type Manager struct {
 	WorkerTaskMap map[string][]uuid.UUID
 	TaskWorkerMap map[uuid.UUID]string
 	LastWorker    int
+	WorkerNodes   []*node.Node
+	Scheduler     scheduler.Scheduler
 }
 
-func New(workers []string) *Manager {
+func New(workers []string, schedulerType string) *Manager {
 	taskDb := make(map[uuid.UUID]*task.Task)
 	eventDb := make(map[uuid.UUID]*task.TaskEvent)
 	workerTaskMap := make(map[string][]uuid.UUID)
 	taskWorkerMap := make(map[uuid.UUID]string)
-	for _, w := range workers {
-		workerTaskMap[w] = []uuid.UUID{}
+	var nodes []*node.Node
+	for worker := range workers {
+		workerTaskMap[workers[worker]] = []uuid.UUID{}
+
+		nAPI := fmt.Sprintf("http://%v", workers[worker])
+		n := node.NewNode(workers[worker], nAPI, "worker")
+		nodes = append(nodes, n)
+	}
+
+	var s scheduler.Scheduler
+	switch schedulerType {
+	case "roundrobin":
+		s = &scheduler.RoundRobin{Name: "roundrobin"}
+	default:
+		s = &scheduler.RoundRobin{Name: "roundrobin"}
 	}
 
 	return &Manager{
@@ -42,6 +59,8 @@ func New(workers []string) *Manager {
 		EventDb:       eventDb,
 		WorkerTaskMap: workerTaskMap,
 		TaskWorkerMap: taskWorkerMap,
+		WorkerNodes:   nodes,
+		Scheduler:     s,
 	}
 }
 
