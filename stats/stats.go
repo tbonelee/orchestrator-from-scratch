@@ -3,7 +3,7 @@
  * 여러 플랫폼에서 사용하기 위해 gopsutil 라이브러리로 대체
  * https://github.com/shirou/gopsutil?tab=readme-ov-file
  */
-package worker
+package stats
 
 import (
 	"github.com/shirou/gopsutil/v3/cpu"

@@ -1,5 +1,7 @@
 package node
 
+import "orchestrator-from-scratch/stats"
+
 type Node struct {
 	Name            string
 	Ip              string
@@ -8,6 +10,7 @@ type Node struct {
 	MemoryAllocated int
 	Disk            int
 	DiskAllocated   int
+	Stats           stats.Stats
 	Role            string
 	TaskCount       int
 }
