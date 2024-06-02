@@ -326,6 +326,10 @@ func (m *Manager) DoHealthChecks() {
 func (m *Manager) doHealthChecks() {
 	for _, t := range m.GetTasks() {
 		if t.State == task.Running && t.RestartCount < 3 {
+			if t.HostPorts == nil {
+				log.Printf("No host ports available for task %s\n", t.ID)
+				continue
+			}
 			err := m.checkTaskHealth(*t)
 			if err != nil {
 				if t.RestartCount < 3 {
