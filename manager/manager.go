@@ -145,6 +145,8 @@ func (m *Manager) updateTasks() {
 			taskPersisted.FinishTime = t.FinishTime
 			taskPersisted.ContainerID = t.ContainerID
 			taskPersisted.HostPorts = t.HostPorts
+
+			err = m.TaskDb.Put(t.ID.String(), taskPersisted)
 		}
 	}
 }
@@ -283,6 +285,10 @@ func (m *Manager) checkTaskHealth(t task.Task) error {
 
 	w := m.TaskWorkerMap[t.ID]
 	hostPort := getHostPort(t.HostPorts)
+	if hostPort == nil {
+		log.Printf("Task %v", t)
+		panic("No host port found")
+	}
 	worker := strings.Split(w, ":")
 	url := fmt.Sprintf("http://%s:%s%s",
 		worker[0], *hostPort, t.HealthCheck)
@@ -327,7 +333,7 @@ func (m *Manager) doHealthChecks() {
 	for _, t := range m.GetTasks() {
 		if t.State == task.Running && t.RestartCount < 3 {
 			if t.HostPorts == nil {
-				log.Printf("No host ports available for task %s\n", t.ID)
+				log.Printf("No host ports found for task %s\n", t.ID)
 				continue
 			}
 			err := m.checkTaskHealth(*t)
