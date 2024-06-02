@@ -113,7 +113,7 @@ func (m *Manager) updateTasks() {
 		}
 
 		for _, t := range tasks {
-			log.Printf("Attempting to update task %v\n", t.ID)
+			log.Printf("[manager] Attempting to update task %v\n", t.ID)
 
 			_, ok := m.TaskDb[t.ID]
 			if !ok {

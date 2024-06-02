@@ -62,6 +62,7 @@ func (w *Worker) runTask() task.DockerResult {
 	}
 
 	taskQueued := t.(task.Task)
+	fmt.Printf("[worker] Found task in queue: %v:\n", taskQueued)
 
 	taskPersisted := w.Db[taskQueued.ID]
 	if taskPersisted == nil {

@@ -1,0 +1,17 @@
+{
+  "ID": "6F675D59-D785-469F-9ACB-C8E4AF673EDE",
+  "State": 2,
+  "Task": {
+    "State": 1,
+    "ID":"6F675D59-D785-469F-9ACB-C8E4AF673EDE",
+    "Name": "test-server1",
+    "Image": "timboring/echo-server:latest",
+    "ExposedPorts": {
+      "7777/tcp": {}
+    },
+    "PortBindings": {
+      "7777/tcp": "7777"
+    },
+    "HealthCheck": "/health"
+  }
+}
