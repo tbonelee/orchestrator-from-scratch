@@ -17,6 +17,10 @@ import (
 
 type State int
 
+func (s State) String() []string {
+	return []string{"Pending", "Scheduled", "Running", "Finished", "Failed"}
+}
+
 type Task struct {
 	ID            uuid.UUID
 	ContainerID   string
